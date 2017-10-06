@@ -1,0 +1,203 @@
+pragma solidity ^0.4.0;
+
+
+contract SocialReg{
+	//structure of a basic family, all the parameters we having data
+	
+	struct Family{
+		uint members;
+		uint[10] aadharnos;
+		uint income;
+		uint category;		//1 for general, 2 for SC, 3 for ST and 4 OBC
+		mapping (address => uint) aadharEditor;
+		mapping (address => uint) incomeEditor;
+		mapping (address => uint) categoryEditor;
+		mapping (address => uint) aadharViewer;
+		mapping (address => uint) incomeViewer;
+		mapping (address => uint) categoryViewer;
+		mapping (address => uint) memberViewer;
+	}
+
+	address govermentHead;
+
+	mapping(address => Family) registry;
+	mapping(address => uint) authorisedAadhar;		//goverment sets whos authorised and whos not
+	mapping(address => uint) authorisedIncome;		// 1 is like having the rights and 0 is not having
+	mapping(address => uint) authorisedCategory;
+
+	event AadharAdded ( address added_by, address added_for);
+	event IncomeUpdated ( address updated_by, address updated_for);
+	event CategoryUpdated ( address updated_by, address updated_for);
+
+	function SocialReg(){
+	govermentHead = msg.sender;
+	}
+
+	//goverment setting up the aadhar centers
+	function registerAuthorisedAadhar(address person){
+		if(msg.sender != govermentHead) return;
+		authorisedAadhar[person] = 1;
+	}
+
+	//goverment setting up the income centers
+	function registerAuthorisedIncome(address person){
+		if(msg.sender != govermentHead) return;
+		authorisedIncome[person] = 1;
+	}
+
+	//goverment setting up the Category centers
+	function registerAuthorisedCategory(address person){
+		if(msg.sender != govermentHead) return;
+		authorisedCategory[person] = 1;
+	}
+
+	//Registering a new Family
+	function registerFamily(uint nos){
+		registry[msg.sender].members = nos;
+		for(uint i=0; i <10; i++){
+		registry[msg.sender].aadharnos[i]=0;
+		}
+	}
+
+	//giving an address the right to edit family's aadharnos
+	function aadharEdit(address authorisingTo){
+		registry[msg.sender].aadharEditor[authorisingTo] = 1;
+	}
+
+	//revoking the right to edit aadharnos
+	function aadharEditRevoke(address revokingfrom){
+		registry[msg.sender].aadharEditor[revokingfrom] = 0;
+	}
+
+	//giving an address the right to edit family's income
+	function incomeEdit(address authorisingTo){
+		registry[msg.sender].incomeEditor[authorisingTo] = 1;
+	}
+
+	//revoking the right to edit income
+	function incomeEditRevoke(address revokingfrom){
+		registry[msg.sender].incomeEditor[revokingfrom] = 0;
+	}
+
+	//giving an address the right to edit family's category
+	function categoryEdit(address authorisingTo){
+		registry[msg.sender].categoryEditor[authorisingTo] = 1;
+	}
+
+	//revoking the right to edit category
+	function categoryEditRevoke(address revokingfrom){
+		registry[msg.sender].categoryEditor[revokingfrom] = 0;
+	}
+
+	//writing someone aadhar details
+
+	function writeAadhar(address family,uint aadhar){
+		if(authorisedAadhar[msg.sender] != 1 || registry[family].aadharEditor[msg.sender] != 1) return;
+		uint i=0;
+		for (i; i<10; i++){
+		if(registry[msg.sender].aadharnos[i] == 0) break;
+		}
+		registry[family].aadharnos[i]=aadhar;
+		AadharAdded(msg.sender,family);
+	}
+
+	//writing income
+	function writeIncome(address family,uint income){
+		if(authorisedIncome[msg.sender] != 1 || registry[family].incomeEditor[msg.sender] != 1) return;
+		registry[family].income = income;
+		IncomeUpdated(msg.sender,family);
+	}
+
+	//updating category
+	function writeCategory(address family,uint category){
+		if(authorisedCategory[msg.sender] != 1 || registry[family].categoryEditor[msg.sender] != 1) return;
+		registry[family].category = category;
+		IncomeUpdated(msg.sender,family);
+	}
+
+
+
+
+	//giving right to view aadhar
+
+	function aadharView(address authorisingTo){
+		registry[msg.sender].aadharViewer[authorisingTo] = 1;
+	}
+
+	//revoking the right to view aadharnos
+	function aadharViewRevoke(address revokingfrom){
+		registry[msg.sender].aadharViewer[revokingfrom] = 0;
+	}
+
+	//giving right to view income
+
+	function incomeView(address authorisingTo){
+		registry[msg.sender].incomeViewer[authorisingTo] = 1;
+	}
+
+	//revoking the right to view income
+	function incomeViewRevoke(address revokingfrom){
+		registry[msg.sender].incomeViewer[revokingfrom] = 0;
+	}
+
+	//giving right to view category
+
+	function categoryView(address authorisingTo){
+		registry[msg.sender].categoryViewer[authorisingTo] = 1;
+	}
+
+	//revoking the right to view category
+	function categoryViewRevoke(address revokingfrom){
+		registry[msg.sender].categoryViewer[revokingfrom] = 0;
+	}
+
+	//giving right to view members
+
+	function memberView(address authorisingTo){
+		registry[msg.sender].memberViewer[authorisingTo] = 1;
+	}
+
+	//revoking the right to view member
+	function memberViewRevoke(address revokingfrom){
+		registry[msg.sender].memberViewer[revokingfrom] = 0;
+	}
+
+
+
+	//Viewing someones number of members details
+
+	function getMembers(address family) returns(uint){
+		if( registry[family].memberViewer[msg.sender] != 1 ) return;
+		return registry[family].members;
+	}
+
+	//Viewing someones number of income details
+
+	function getIncome(address family) returns(uint){
+		if( registry[family].incomeViewer[msg.sender] != 1 ) return;
+		return registry[family].income;
+	}
+
+	//Viewing someones number of category details
+
+	function getCategory(address family) returns(uint){
+		if( registry[family].categoryViewer[msg.sender] != 1 ) return;
+		return registry[family].category;
+	}
+
+	//Viewing someones number of aadhar details
+
+	function getAadhar(address family) returns(uint[10]){
+		if( registry[family].aadharViewer[msg.sender] != 1 ) return;
+		return registry[family].aadharnos;
+	}
+
+
+
+	//SchemeA if income less 20K pa per family and belong to category 2 or 3 you are 
+	//entitled to get 10K pa
+
+	
+
+
+}
