@@ -1,0 +1,29 @@
+contract specialSale {
+	mapping (address => bool) first24;
+	address owner;
+
+	function specialSale(){
+		owner = msg.sender;
+	}
+
+	modifier onlyOwner(){
+	if(msg.sender != owner) throw;
+	_;
+	}
+
+	function registerSpecial (address _user) onlyOwner returns (bool status){
+		first24[_user] = true;
+		return true;
+	}
+
+	function revokeSpecial ( address _user) onlyOwner returns (bool status) {
+		first24[_user]= false;
+		return true;
+	}
+
+	modifier onlySpecial() {
+	require(first24[msg.sender]);
+	_;
+	}
+
+	}
